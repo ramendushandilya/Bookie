@@ -7,6 +7,8 @@ import com.bookworm.repository.PasswordResetTokenRepository;
 import com.bookworm.repository.RoleRepository;
 import com.bookworm.repository.UserRepository;
 import com.bookworm.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,8 @@ import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService{
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -54,7 +58,7 @@ public class UserServiceImpl implements UserService{
         User localUser = userRepository.findByUsername(user.getUsername());
 
         if(localUser != null) {
-            throw new Exception("User already exits");
+            LOG.info("User {} already exits", user.getUsername());
         } else {
             for(UserRole ur : userRoles) {
                 roleRepository.save(ur.getRole());

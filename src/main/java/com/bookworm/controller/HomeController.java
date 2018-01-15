@@ -55,6 +55,7 @@ public class HomeController {
 
     @RequestMapping("/login")
     public String login(Model model) {
+
         model.addAttribute("classActiveLogin", true);
         return "myAccount";
     }
@@ -123,7 +124,7 @@ public class HomeController {
 
         User user = passwordResetToken.getUser();
         String username = user.getUsername();
-        UserDetails userDetails = userSecurityService.loadUserByName(username);
+        UserDetails userDetails = userSecurityService.loadUserByUsername(username);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(),
                 userDetails.getAuthorities());

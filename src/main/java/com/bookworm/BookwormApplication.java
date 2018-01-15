@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @SpringBootApplication
-public class BookwormApplication implements CommandLineRunner{
+public class BookwormApplication /*implements CommandLineRunner*/{
 
 	@Autowired
 	private UserService userService;
@@ -22,7 +22,7 @@ public class BookwormApplication implements CommandLineRunner{
 	public static void main(String[] args) {
 		SpringApplication.run(BookwormApplication.class, args);
 	}
-
+/*
 	@Override
 	public void run(String... args) throws Exception {
 		User user1 = new User();
@@ -38,5 +38,5 @@ public class BookwormApplication implements CommandLineRunner{
 		userRoles.add(new UserRole(user1, role1));
 
 		userService.createUser(user1, userRoles);
-	}
+	}*/
 }
