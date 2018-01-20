@@ -11,6 +11,7 @@ import com.bookworm.utility.SecurityUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by failedOptimus on 14-01-2018.
@@ -47,7 +45,6 @@ public class HomeController {
     @Autowired
     private UserSecurityService userSecurityService;
 
-
     @RequestMapping("/")
     public String showIndex() {
         return "index";
@@ -61,8 +58,37 @@ public class HomeController {
     }
 
     @RequestMapping("/forgetPassword")
-    public String forgetPassword(Model model) {
+    public String forgetPassword(
+            HttpServletRequest request,
+            @ModelAttribute("email") String email,
+            Model model
+            ) throws Exception{
         model.addAttribute("classActiveForgetPassword", true);
+        User user = userService.findByEmail(email);
+
+        if(user == null) {
+            model.addAttribute("emailNotExist", true);
+            return "myAccount";
+        }
+
+        String password = SecurityUtility.randomPassword();
+
+        String encryptedPassword = SecurityUtility.passwordEncoder().encode(password);
+        user.setPassword(encryptedPassword);
+
+        userService.save(user);
+
+        String token = UUID.randomUUID().toString();
+        userService.createPasswordResetTokenForUser(user, token);
+
+        String appUrl = "http://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath();
+
+
+        SimpleMailMessage newEmail = mailConstructor.constructResetTokenEmail(appUrl, request.getLocale(), token, user, password);
+
+        mailSender.send(newEmail);
+        model.addAttribute("forgetPasswordEmailSent", true);
+
         return "myAccount";
     }
 
@@ -81,7 +107,7 @@ public class HomeController {
         }
 
         if(userService.findByEmail(userEmail) != null) {
-            model.addAttribute("email", true);
+            model.addAttribute("emailExists", true);
             return "myAccount";
         }
 
@@ -108,7 +134,7 @@ public class HomeController {
         mailSender.send(email);
 
         model.addAttribute("emailSent", true);
-
+        System.out.print("inside the check");
         return "myAccount";
     }
 
@@ -134,5 +160,14 @@ public class HomeController {
         model.addAttribute("user", user);
         model.addAttribute("classActiveEdit", true);
         return "myProfile";
+    }
+
+    @RequestMapping(value = "/updateUserInfo", method = RequestMethod.POST)
+    public String updateUserInfo(
+            @ModelAttribute("user") User user,
+            @ModelAttribute("newPassword") String newPassword,
+            Model model
+    ) throws Exception {
+        return null;
     }
 }

@@ -59,7 +59,7 @@
 								</div>
 
 								<form th:action="@{/updateUserInfo}" method="post">
-									<input type="hidden" name="id" th:value="${user.id}" />
+									<input type="hidden" name="id" th:value="${user.userId}" />
 
 									<div class="bg-info" th:if="${updateUserInfo}">User info
 										updated.</div>
