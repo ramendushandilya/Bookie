@@ -13,6 +13,7 @@ import java.util.stream.Stream;
  * Created by failedOptimus on 15-01-2018.
  */
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
+/*
 
     PasswordResetToken findByToken(String token);
 
@@ -23,5 +24,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     @Modifying
     @Query("delete from PasswordResetToken t where t.expiry <= 1")
     void deleteAllExpiredSince(Date now);
+*/
 
+    PasswordResetToken findByToken(String token);
 }
