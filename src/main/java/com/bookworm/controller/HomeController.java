@@ -231,4 +231,14 @@ public class HomeController {
         model.addAttribute("qty",1);
         return "bookDetail";
     }
+
+    @RequestMapping("/myProfile")
+    public String myProfile(Model model, Principal principal) {
+        User user = userService.findByUsername(principal.getName());
+        model.addAttribute("user", user);
+        return "myProfile";
+    }
+
+
+
 }
