@@ -57,41 +57,15 @@ public class HomeController {
         return "myAccount";
     }
 
-    @RequestMapping("/forgetPassword")
-    public String forgetPassword(
-            HttpServletRequest request,
-            @ModelAttribute("email") String email,
-            Model model
-            ) throws Exception{
-        model.addAttribute("classActiveForgetPassword", true);
-        User user = userService.findByEmail(email);
-
-        if(user == null) {
-            model.addAttribute("emailNotExist", true);
-            return "myAccount";
-        }
-
-        String password = SecurityUtility.randomPassword();
-
-        String encryptedPassword = SecurityUtility.passwordEncoder().encode(password);
-        user.setPassword(encryptedPassword);
-
-        userService.save(user);
-
-        String token = UUID.randomUUID().toString();
-        userService.createPasswordResetTokenForUser(user, token);
-
-        String appUrl = "http://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath();
-
-
-        SimpleMailMessage newEmail = mailConstructor.constructResetTokenEmail(appUrl, request.getLocale(), token, user, password);
-
-        mailSender.send(newEmail);
-        model.addAttribute("forgetPasswordEmailSent", true);
-
-        return "myAccount";
-    }
-
+    /**
+     * Handles the creation of new user and sending the mail for account activation
+     * @param request
+     * @param userEmail
+     * @param userName
+     * @param model
+     * @return
+     * @throws Exception
+     */
     @RequestMapping(value = "/newUser", method = RequestMethod.POST)
     public String newUserPost(HttpServletRequest request,
                               @ModelAttribute("email") String userEmail,
@@ -138,6 +112,13 @@ public class HomeController {
         return "myAccount";
     }
 
+    /**
+     * Handles the user creation final part once the user verifies account after clicking the email
+     * @param model
+     * @param locale
+     * @param token
+     * @return
+     */
     @RequestMapping("/newUser")
     public String newUser(Model model, Locale locale, @RequestParam("token") String token) {
         PasswordResetToken passwordResetToken = userService.getPasswordResetToken(token);
@@ -170,4 +151,53 @@ public class HomeController {
     ) throws Exception {
         return null;
     }
+
+    /**
+     * Handles the part where user forgets password and wants to retrieve the details
+     * @param request
+     * @param email
+     * @param model
+     * @return
+     * @throws Exception
+     */
+
+    @RequestMapping("/forgetPassword")
+    public String forgetPassword(
+            HttpServletRequest request,
+            @ModelAttribute("email") String email,
+            Model model
+    ) throws Exception{
+        model.addAttribute("classActiveForgetPassword", true);
+        User user = userService.findByEmail(email);
+
+        if(user == null) {
+            model.addAttribute("emailNotExist", true);
+            return "myAccount";
+        }
+
+        String password = SecurityUtility.randomPassword();
+
+        String encryptedPassword = SecurityUtility.passwordEncoder().encode(password);
+        user.setPassword(encryptedPassword);
+
+        userService.save(user);
+
+        String token = UUID.randomUUID().toString();
+        userService.createPasswordResetTokenForUser(user, token);
+
+        String appUrl = "http://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath();
+
+
+        SimpleMailMessage newEmail = mailConstructor.constructResetTokenEmail(appUrl, request.getLocale(), token, user,
+                password);
+
+        //TODO enhance mail constructor to handle the request of forget password reset mail more explicitly
+
+        mailSender.send(newEmail);
+        model.addAttribute("forgetPasswordEmailSent", true);
+
+        return "myAccount";
+    }
+
+
 }
