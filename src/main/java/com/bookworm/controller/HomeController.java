@@ -5,6 +5,7 @@ import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.Role;
 import com.bookworm.domain.security.UserRole;
 import com.bookworm.service.BookService;
+import com.bookworm.service.UserPaymentService;
 import com.bookworm.service.UserService;
 import com.bookworm.service.impl.UserSecurityService;
 import com.bookworm.utility.MailConstructor;
@@ -52,6 +53,9 @@ public class HomeController {
 
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private UserPaymentService userPaymentService;
 
     @RequestMapping("/")
     public String showIndex() {
@@ -394,6 +398,36 @@ public class HomeController {
         model.addAttribute("orderList", user.getOrderList());
 
         return "myProfile";
+    }
+
+    @RequestMapping("/updateCreditCard")
+    public String updateCreditCart(
+            @ModelAttribute("id") Long creditCardId, Principal principal, Model model
+    ) {
+        User user = userService.findByUsername(principal.getName());
+        UserPayment userPayment = userPaymentService.findById(creditCardId);
+
+        if(user.getUserId() != userPayment.getUser().getUserId()) {
+            return "badRequestPage";
+        } else {
+            model.addAttribute("user", user);
+            UserBilling userBilling = userPayment.getUserBilling();
+            model.addAttribute("userPayment", userPayment);
+            model.addAttribute("userBilling", userBilling);
+
+            List<String> stateList = USConstants.listOfUSStatesCode;
+            Collections.sort(stateList);
+            model.addAttribute("stateList", stateList);
+            model.addAttribute("addNewCreditCard", true);
+            model.addAttribute("classActiveBilling", true);
+            model.addAttribute("listOfShippingAddresses", true);
+
+            model.addAttribute("userPaymentList", user.getUserPaymentList());
+            model.addAttribute("userShippingList", user.getUserShippingList());
+            model.addAttribute("orderList", user.getOrderList());
+
+            return "myProfile";
+        }
     }
 
 }
