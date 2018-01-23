@@ -1,6 +1,9 @@
 package com.bookworm.service;
 
 import com.bookworm.domain.User;
+import com.bookworm.domain.UserBilling;
+import com.bookworm.domain.UserPayment;
+import com.bookworm.domain.UserShipping;
 import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.UserRole;
 
@@ -23,4 +26,7 @@ public interface UserService {
 
     User save(User user);
 
+    void updateUserBilling(UserBilling userBilling, UserPayment userPayment, User user);
+
+    void updateUserShipping(UserShipping userShipping, User user);
 }

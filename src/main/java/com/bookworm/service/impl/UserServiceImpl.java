@@ -1,6 +1,9 @@
 package com.bookworm.service.impl;
 
 import com.bookworm.domain.User;
+import com.bookworm.domain.UserBilling;
+import com.bookworm.domain.UserPayment;
+import com.bookworm.domain.UserShipping;
 import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.UserRole;
 import com.bookworm.repository.PasswordResetTokenRepository;
@@ -74,4 +77,24 @@ public class UserServiceImpl implements UserService{
     public User save(User user) {
         return userRepository.save(user);
     }
+
+    @Override
+    public void updateUserBilling(UserBilling userBilling, UserPayment userPayment, User user) {
+        userPayment.setUser(user);
+        userPayment.setUserBilling(userBilling);
+        userPayment.setDefaultPayment(true);
+        userBilling.setUserPayment(userPayment);
+        user.getUserPaymentList().add(userPayment);
+        save(user);
+    }
+
+    @Override
+    public void updateUserShipping(UserShipping userShipping, User user) {
+        userShipping.setUser(user);
+        userShipping.setUserShippingDefault(true);
+        user.getUserShippingList().add(userShipping);
+        save(user);
+    }
+
+
 }
