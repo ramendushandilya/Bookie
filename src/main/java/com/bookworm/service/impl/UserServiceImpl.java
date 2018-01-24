@@ -6,15 +6,14 @@ import com.bookworm.domain.UserPayment;
 import com.bookworm.domain.UserShipping;
 import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.UserRole;
-import com.bookworm.repository.PasswordResetTokenRepository;
-import com.bookworm.repository.RoleRepository;
-import com.bookworm.repository.UserRepository;
+import com.bookworm.repository.*;
 import com.bookworm.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,6 +24,12 @@ import java.util.Set;
 public class UserServiceImpl implements UserService{
 
     private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
+
+    @Autowired
+    private UserShippingRespository userShippingRespository;
+
+    @Autowired
+    private UserPaymentRepository userPaymentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -96,5 +101,32 @@ public class UserServiceImpl implements UserService{
         save(user);
     }
 
+    @Override
+    public void setUserDefaultPayment(Long defaultPaymentId, User user) {
+        List<UserPayment> userPaymentList = (List<UserPayment>) userPaymentRepository.findAll();
+        for(UserPayment up : userPaymentList) {
+            if(up.getId() == defaultPaymentId) {
+                up.setDefaultPayment(true);
+                userPaymentRepository.save(up);
+            } else {
+                up.setDefaultPayment(false);
+                userPaymentRepository.save(up);
+            }
+        }
+    }
+
+    @Override
+    public void setDefaultShippingAddress(Long defaultShippingAddressId, User user) {
+        List<UserShipping> userShippingList = (List<UserShipping>) userShippingRespository.findAll();
+        for(UserShipping userShipping : userShippingList) {
+            if(userShipping.getId() == defaultShippingAddressId) {
+                userShipping.setUserShippingDefault(true);
+                userShippingRespository.save(userShipping);
+            } else {
+                userShipping.setUserShippingDefault(false);
+                userShippingRespository.save(userShipping);
+            }
+        }
+    }
 
 }
