@@ -4,10 +4,7 @@ import com.bookworm.domain.*;
 import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.Role;
 import com.bookworm.domain.security.UserRole;
-import com.bookworm.service.BookService;
-import com.bookworm.service.UserPaymentService;
-import com.bookworm.service.UserService;
-import com.bookworm.service.UserShippingService;
+import com.bookworm.service.*;
 import com.bookworm.service.impl.UserSecurityService;
 import com.bookworm.utility.MailConstructor;
 import com.bookworm.utility.SecurityUtility;
@@ -15,10 +12,13 @@ import com.bookworm.utility.USConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.access.method.P;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -58,6 +58,12 @@ public class HomeController {
 
     @Autowired
     private UserShippingService userShippingService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private CartItemService cartItemService;
 
     @RequestMapping("/")
     public String showIndex() {
@@ -163,6 +169,58 @@ public class HomeController {
             @ModelAttribute("newPassword") String newPassword,
             Model model
     ) throws Exception {
+        User currentUser = userService.findById(user.getUserId());
+        if(currentUser != null) {
+            throw new Exception("User not found!");
+        }
+
+        /* Check if email exists*/
+        if(userService.findByEmail(user.getEmail()) != null) {
+            if(userService.findByEmail(user.getEmail()).getUserId() != currentUser.getUserId()) {
+                model.addAttribute("emailExists", true);
+                return "myProfile";
+            }
+        }
+
+        /* Check if username exists*/
+        if(userService.findByUsername(user.getUsername()) != null) {
+            if(userService.findByUsername(user.getUsername()).getUserId() != currentUser.getUserId()) {
+                model.addAttribute("usernameExists", true);
+            }
+        }
+
+        /* Update password*/
+        if(newPassword != null && !newPassword.isEmpty() && !newPassword.equals("")) {
+            BCryptPasswordEncoder passwordEncoder = SecurityUtility.passwordEncoder();
+            String dbPassword = currentUser.getPassword();
+            if(passwordEncoder.matches(user.getPassword(), dbPassword)) {
+                currentUser.setPassword(passwordEncoder.encode(newPassword));
+            } else {
+                model.addAttribute("incorrectPassword", true);
+                return "myProfile";
+            }
+        }
+
+        currentUser.setFirstName(user.getFirstName());
+        currentUser.setLastName(user.getLastName());
+        currentUser.setUsername(user.getUsername());
+        currentUser.setEmail(user.getEmail());
+        userService.save(currentUser);
+
+        model.addAttribute("updateSuccess", true);
+        model.addAttribute("user", currentUser);
+        model.addAttribute("classActiveEdit", true);
+
+        model.addAttribute("listOfShippingAddresses", true);
+        model.addAttribute("listOfCreditCards",true);
+
+        UserDetails userDetails = userSecurityService.loadUserByUsername(currentUser.getUsername());
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(),
+                userDetails.getAuthorities());
+        SecurityContextHolder .getContext().setAuthentication(authentication);
+        model.addAttribute("orderList", user.getOrderList());
+
         return null;
     }
 
@@ -499,5 +557,84 @@ public class HomeController {
         return "myProfile";
     }
 
+    @RequestMapping("/removeCreditCard")
+    public String removeCreditCard(
+            @ModelAttribute("id") Long id, Principal principal, Model model
+    ) {
+        User user = userService.findByUsername(principal.getName());
+        UserPayment userPayment = userPaymentService.findById(id);
+
+        if(user.getUserId() != userPayment.getUser().getUserId()) {
+            return "badRequestPage";
+        } else {
+            model.addAttribute("user", user);
+            userPaymentService.removeById(id);
+
+            model.addAttribute("listOfCreditCards", true);
+            model.addAttribute("classActiveBilling", true);
+            model.addAttribute("listOfShippingAddresses", true);
+
+            model.addAttribute("userPaymentList", user.getUserPaymentList());
+            model.addAttribute("userShippingList", user.getUserShippingList());
+            model.addAttribute("orderList", user.getOrderList());
+            return "myProfile";
+        }
+    }
+
+    @RequestMapping("/removeUserShipping")
+    public String removeShippingAddress(
+            @ModelAttribute("id") Long id, Principal principal, Model model
+    ) {
+        User user = userService.findByUsername(principal.getName());
+        UserShipping userShipping = userShippingService.findById(id);
+
+        if(user.getUserId() != userShipping.getUser().getUserId()) {
+            return "badRequestPage";
+        } else {
+            model.addAttribute("user", user);
+            userShippingService.removeById(id);
+
+            model.addAttribute("listOfShippingAddresses", true);
+            model.addAttribute("classActiveShipping", true);
+
+            model.addAttribute("userPaymentList", user.getUserPaymentList());
+            model.addAttribute("userShippingList", user.getUserShippingList());
+            model.addAttribute("orderList", user.getOrderList());
+            return "myProfile";
+        }
+    }
+
+    @RequestMapping("/orderDetail")
+    public String orderDetail(
+            @RequestParam("id") Long orderId, Principal principal, Model model
+    ) {
+        User user = userService.findByUsername(principal.getName());
+        Order order = orderService.findOne(orderId);
+
+        if(order.getUser().getUserId() != user.getUserId()) {
+            return "badRequestPage";
+        } else {
+            List<CartItem> cartItems = cartItemService.findByOrder(order);
+            model.addAttribute("cartItemList", cartItems);
+            model.addAttribute("user", user);
+            model.addAttribute("order", order);
+
+            model.addAttribute("userPaymentList", user.getUserPaymentList());
+            model.addAttribute("userShippingList", user.getUserShippingList());
+            model.addAttribute("orderList", user.getOrderList());
+
+            UserShipping userShipping = new UserShipping();
+            model.addAttribute("userShipping", userShipping);
+
+            List<String> stateList = USConstants.listOfUSStatesCode;
+            Collections.sort(stateList);
+            model.addAttribute("stateList", stateList);
+            model.addAttribute("listOfShippingAddresses", true);
+            model.addAttribute("classActiveOrders", true);
+            model.addAttribute("listOfCreditCards", true);
+            model.addAttribute("displayOrderDetail", true);
+            return "myProfile";
+        }
+    }
 
 }
