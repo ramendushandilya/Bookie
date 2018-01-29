@@ -47,6 +47,17 @@ public class User implements UserDetails{
     @OneToMany(mappedBy = "user")
     private List<Order> orderList;
 
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+    private ShoppingCart shoppingCart;
+
+    public ShoppingCart getShoppingCart() {
+        return shoppingCart;
+    }
+
+    public void setShoppingCart(ShoppingCart shoppingCart) {
+        this.shoppingCart = shoppingCart;
+    }
+
     public List<UserShipping> getUserShippingList() {
         return userShippingList;
     }

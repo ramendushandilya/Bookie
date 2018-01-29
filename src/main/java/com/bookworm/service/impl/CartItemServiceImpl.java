@@ -1,11 +1,13 @@
 package com.bookworm.service.impl;
 
 import com.bookworm.domain.*;
+import com.bookworm.repository.BookToCartItemRepository;
 import com.bookworm.repository.CartItemRepository;
 import com.bookworm.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -18,38 +20,67 @@ public class CartItemServiceImpl implements CartItemService{
     @Autowired
     private CartItemRepository cartItemRepository;
 
+    @Autowired
+    private BookToCartItemRepository bookToCartItemRepository;
+
     @Override
     public List<CartItem> findByShoppingCart(ShoppingCart cart) {
-        return null;
+        return cartItemRepository.findByShoppingCart(cart);
     }
 
     @Override
     public CartItem updateCartItem(CartItem cart) {
-        return null;
+        BigDecimal bigDecimal = new BigDecimal(cart.getBook().getOurPrice()).multiply(new BigDecimal(cart.getQty()));
+        bigDecimal = bigDecimal.setScale(2, BigDecimal.ROUND_HALF_UP);
+        cart.setSubtotal(bigDecimal);
+        cartItemRepository.save(cart);
+        return cart;
     }
 
     @Override
     public CartItem addBookToCartItem(Book book, User user, int quantity) {
-        return null;
+        List<CartItem> cartItems = findByShoppingCart(user.getShoppingCart());
+        for(CartItem items : cartItems) {
+            if(book.getId() == items.getBook().getId()) {
+                items.setQty(items.getQty()+quantity);
+                items.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(quantity)));
+                cartItemRepository.save(items);
+                return items;
+            }
+        }
+
+        CartItem cartItem = new CartItem();
+        cartItem.setShoppingCart(user.getShoppingCart());
+        cartItem.setBook(book);
+        cartItem.setQty(quantity);
+        cartItem.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(quantity)));
+        cartItem = cartItemRepository.save(cartItem);
+
+        BookToCartItem bookToCartItem = new BookToCartItem();
+        bookToCartItem.setBook(book);
+        bookToCartItem.setCartItem(cartItem);
+        bookToCartItemRepository.save(bookToCartItem);
+        return cartItem;
     }
 
     @Override
     public CartItem findById(Long id) {
-        return null;
+        return cartItemRepository.findOne(id);
     }
 
     @Override
     public void removeCartItem(CartItem cartItem) {
-
+        bookToCartItemRepository.deleteByCartItem(cartItem);
+        cartItemRepository.delete(cartItem);
     }
 
     @Override
     public CartItem save(CartItem cart) {
-        return null;
+        return cartItemRepository.save(cart);
     }
 
     @Override
     public List<CartItem> findByOrder(Order order) {
-        return null;
+        return cartItemRepository.findByOrder(order);
     }
 }
