@@ -52,7 +52,7 @@ public class ShoppingCartController {
         return "shoppingCart";
     }
 
-    @RequestMapping("addItem")
+    @RequestMapping("/addItem")
     public String addItem(
             @ModelAttribute("book") Book book,
             @ModelAttribute("qty") String qty,
@@ -61,6 +61,7 @@ public class ShoppingCartController {
         User user = userService.findByUsername(principal.getName());
         book = bookService.findOne(book.getId());
 
+        /* If the number of books to be added is less than the stock count of the books*/
         if(Integer.parseInt(qty) > book.getInStockNumber()) {
             model.addAttribute("notEnoughStock", true);
             return "forward:/bookDetail?id="+book.getId();

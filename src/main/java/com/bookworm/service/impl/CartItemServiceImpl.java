@@ -38,12 +38,12 @@ public class CartItemServiceImpl implements CartItemService{
     }
 
     @Override
-    public CartItem addBookToCartItem(Book book, User user, int quantity) {
+    public CartItem addBookToCartItem(Book book, User user, int qty) {
         List<CartItem> cartItems = findByShoppingCart(user.getShoppingCart());
         for(CartItem items : cartItems) {
             if(book.getId() == items.getBook().getId()) {
-                items.setQty(items.getQty()+quantity);
-                items.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(quantity)));
+                items.setQty(items.getQty()+qty);
+                items.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(qty)));
                 cartItemRepository.save(items);
                 return items;
             }
@@ -52,8 +52,8 @@ public class CartItemServiceImpl implements CartItemService{
         CartItem cartItem = new CartItem();
         cartItem.setShoppingCart(user.getShoppingCart());
         cartItem.setBook(book);
-        cartItem.setQty(quantity);
-        cartItem.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(quantity)));
+        cartItem.setQty(qty);
+        cartItem.setSubtotal(new BigDecimal(book.getOurPrice()).multiply(new BigDecimal(qty)));
         cartItem = cartItemRepository.save(cartItem);
 
         BookToCartItem bookToCartItem = new BookToCartItem();
