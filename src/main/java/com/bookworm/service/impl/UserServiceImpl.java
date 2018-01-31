@@ -1,9 +1,6 @@
 package com.bookworm.service.impl;
 
-import com.bookworm.domain.User;
-import com.bookworm.domain.UserBilling;
-import com.bookworm.domain.UserPayment;
-import com.bookworm.domain.UserShipping;
+import com.bookworm.domain.*;
 import com.bookworm.domain.security.PasswordResetToken;
 import com.bookworm.domain.security.UserRole;
 import com.bookworm.repository.*;
@@ -12,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -62,6 +61,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public User createUser(User user, Set<UserRole> userRoles) throws Exception{
         User localUser = userRepository.findByUsername(user.getUsername());
 
@@ -72,6 +72,14 @@ public class UserServiceImpl implements UserService{
                 roleRepository.save(ur.getRole());
             }
             user.getUserRoles().addAll(userRoles);
+
+            ShoppingCart shoppingCart = new ShoppingCart();
+            shoppingCart.setUser(user);
+            user.setShoppingCart(shoppingCart);
+
+            user.setUserShippingList(new ArrayList<UserShipping>());
+            user.setUserPaymentList(new ArrayList<UserPayment>());;
+
             localUser = userRepository.save(user);
         }
 
