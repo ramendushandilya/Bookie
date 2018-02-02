@@ -68,6 +68,16 @@ public class HomeController {
         return "index";
     }
 
+    @RequestMapping("/hours")
+    public String hours() {
+        return "hours";
+    }
+
+    @RequestMapping("/faq")
+    public String faq() {
+        return "faq";
+    }
+
     @RequestMapping("/login")
     public String login(Model model) {
 
